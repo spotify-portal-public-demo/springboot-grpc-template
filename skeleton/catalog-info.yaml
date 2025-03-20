@@ -1,0 +1,25 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ${{ values.component_id }}
+  {%- if values.description %}
+  description: ${{ values.description | dump }}
+  {%- endif %}
+  tags:
+    - java
+    - grpc
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+    github.com/project-slug: ${{ values.destination.owner + "/" + values.destination.repo }}
+    sonarqube.org/project-key: ${{ values.destination.owner + "_" + values.destination.repo }}
+    grafana/dashboard-selector: ${{ values.component_id }}
+    backstage.io/kubernetes-id: ${{ values.component_id }}
+    backstage.io/kubernetes-namespace: ${{ values.component_id }}
+    backstage.io/kubernetes-label-selector: ${{ "app=" + values.component_id }}
+spec:
+  type: service
+  lifecycle: experimental
+  owner: ${{ values.owner | dump }}
+  {%- if values.system %}
+  system: ${{ values.system | dump }}
+  {%- endif %}

@@ -1,0 +1,112 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: springboot-grpc-template
+  title: Spring Boot gRPC Service
+  description: Create a simple microservice using gRPC and Spring Boot Java
+  tags:
+    - backend
+    - java
+    - grpc
+spec:
+  owner: group:devex
+  type: service
+
+  parameters:
+    - title: About
+      required:
+        - component_id
+      properties:
+        component_id:
+          title: Name
+          type: string
+          description: The unique name of the service
+          ui:field: EntityNamePicker
+        description:
+          title: Description
+          type: string
+          description: Description of the service
+
+    - title: Ownership
+      required:
+        - owner
+      properties:
+        owner:
+          title: Owner
+          type: string
+          description: Owner of the service
+          ui:field: OwnerPicker
+          ui:options:
+            catalogFilter:
+              - kind: Group
+        system:
+          title: System
+          type: string
+          description: The system for the service
+          ui:field: EntityPicker
+          ui:options:
+            catalogFilter:
+              - kind: System
+
+    - title: Configuration
+      required:
+        - java_package_name
+      properties:
+        java_package_name:
+          title: Java Package Name
+          type: string
+          description: Name for the java package - e.g. (com.spotify.demo.<package>)
+
+    - title: Location
+      required:
+        - repoUrl
+      properties:
+        repoUrl:
+          title: Repository location
+          type: string
+          ui:field: RepoUrlPicker
+          ui:options:
+            allowedHosts:
+              - github.com
+
+  steps:
+    - id: template
+      name: Fetch Skeleton
+      action: fetch:template
+      input:
+        url: ./skeleton
+        copyWithoutRender:
+          - .github/workflows/*
+        values:
+          component_id: ${{ parameters.component_id }}
+          description: ${{ parameters.description }}
+          owner: ${{ parameters.owner }}
+          system: ${{ parameters.system }}
+          java_package_name: ${{ parameters.java_package_name }}
+          destination: ${{ parameters.repoUrl | parseRepoUrl }}
+          artifact_id: ${{ parameters.component_id }}
+
+    - id: publish
+      name: Publish
+      action: publish:github
+      input:
+        repoUrl: ${{ parameters.repoUrl }}
+        description: This is ${{ parameters.component_id }}
+        repoVisibility: public
+        defaultBranch: main
+        protectEnforceAdmins: false
+
+    - id: register
+      name: Register
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
+        catalogInfoPath: /catalog-info.yaml
+
+  output:
+    links:
+      - title: Repository
+        url: ${{ steps.publish.output.remoteUrl }}
+      - title: Open in catalog
+        icon: catalog
+        entityRef: ${{ steps.register.output.entityRef }}
