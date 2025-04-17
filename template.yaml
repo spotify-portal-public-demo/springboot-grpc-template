@@ -77,6 +77,34 @@ spec:
         description: This is ${{ parameters.component_id }}
         repoVisibility: public
         defaultBranch: main
+        protectEnforceAdmins: false
+
+    - id: flux_fetch
+      name: Fetch the Flux repo
+      action: fetch:plain
+      input:
+        url: https://github.com/spotify-portal-public-demo/flux
+        targetPath: flux
+
+    - id: flux_template
+      name: Add manifest file to Flux repo
+      action: fetch:template:file
+      input:
+        url: https://github.com/spotify-portal-public-demo/flux/blob/main/templates/flux-app.yaml
+        targetPath: flux/clusters/demo/apps/${{ parameters.component_id }}.yaml
+        values:
+          component_id: ${{ parameters.component_id }}
+          destination: ${{ parameters.repoUrl | parseRepoUrl }}
+
+    - id: flux_pr
+      name: Create Flux PR to enable deployments
+      action: publish:github:pull-request
+      input:
+        repoUrl: github.com?repo=flux&owner=spotify-portal-public-demo
+        branchName: scaffolder-${{ parameters.component_id }}
+        title: add app ${{ parameters.component_id }}
+        description: This PR adds a new Flux manifest for '${{ parameters.component_id }}' which will enable deployments.
+        sourcePath: flux
 
     - id: register
       name: Register
@@ -89,6 +117,8 @@ spec:
     links:
       - title: Repository
         url: ${{ steps.publish.output.remoteUrl }}
+      - title: Flux PR
+        url: ${{ steps.flux_pr.output.remoteUrl }}
       - title: Open in catalog
         icon: catalog
         entityRef: ${{ steps.register.output.entityRef }}
