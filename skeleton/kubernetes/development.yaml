@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: ${{ values.component_id }}
-          image: ghcr.io/${{ values.destination.owner }}/${{ values.destination.repo }}:latest
+          image: ghcr.io/${{ values.destination.owner }}/${{ values.destination.repo }}:latest # {"$imagepolicy": "flux-system:${{ values.component_id }}"}
           imagePullPolicy: Always
           resources:
             requests:

@@ -75,6 +75,7 @@ spec:
       action: fetch:template
       input:
         url: ./skeleton
+        targetPath: repo
         copyWithoutRender:
           - .github/workflows/*
         values:
@@ -86,15 +87,43 @@ spec:
           destination: ${{ parameters.repoUrl | parseRepoUrl }}
           artifact_id: ${{ parameters.component_id }}
 
+    - id: flux_fetch
+      name: Fetch Flux
+      action: fetch:plain
+      input:
+        url: https://github.com/spotify-portal-public-demo/flux
+        targetPath: flux
+
+    - id: flux_template
+      name: Add Manifest
+      action: fetch:template:file
+      input:
+        url: https://github.com/spotify-portal-public-demo/flux/blob/main/templates/flux-app.yaml
+        targetPath: flux/clusters/demo/apps/${{ parameters.component_id }}.yaml
+        values:
+          component_id: ${{ parameters.component_id }}
+          destination: ${{ parameters.repoUrl | parseRepoUrl }}
+
     - id: publish
       name: Publish
       action: publish:github
       input:
         repoUrl: ${{ parameters.repoUrl }}
+        sourcePath: repo
         description: This is ${{ parameters.component_id }}
         repoVisibility: public
         defaultBranch: main
         protectEnforceAdmins: false
+
+    - id: flux_pr
+      name: Flux PR
+      action: publish:github:pull-request
+      input:
+        repoUrl: github.com?repo=flux&owner=spotify-portal-public-demo
+        sourcePath: flux
+        branchName: scaffolder-${{ parameters.component_id }}
+        title: add app ${{ parameters.component_id }}
+        description: This PR adds a new Flux manifest for '${{ parameters.component_id }}' which will enable deployments.
 
     - id: register
       name: Register
@@ -107,6 +136,8 @@ spec:
     links:
       - title: Repository
         url: ${{ steps.publish.output.remoteUrl }}
+      - title: Flux PR
+        url: ${{ steps.flux_pr.output.remoteUrl }}
       - title: Open in catalog
         icon: catalog
         entityRef: ${{ steps.register.output.entityRef }}
