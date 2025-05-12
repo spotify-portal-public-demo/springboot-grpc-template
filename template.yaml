@@ -99,7 +99,7 @@ spec:
       action: fetch:template:file
       input:
         url: https://github.com/spotify-portal-public-demo/flux/blob/main/templates/flux-app.yaml
-        targetPath: flux/clusters/demo/apps/${{ parameters.component_id }}.yaml
+        targetPath: flux/apps/${{ parameters.component_id }}.yaml
         values:
           component_id: ${{ parameters.component_id }}
           destination: ${{ parameters.repoUrl | parseRepoUrl }}
